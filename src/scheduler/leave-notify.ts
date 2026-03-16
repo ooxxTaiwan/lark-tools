@@ -2,7 +2,7 @@
 import cron from 'node-cron';
 import { client } from '../lark/client';
 import { getLeavesByDate, updateTodo, TodoRecord } from '../modules/todo';
-import { sendGroupMessage } from '../modules/notify';
+import { sendGroupMessage, sendWebhookMessage } from '../modules/notify';
 import { buildLeaveNotifyCard } from '../lark/cards';
 import { formatDateWithWeekday } from '../utils/date';
 import { config } from '../config';
@@ -27,20 +27,35 @@ export async function sendLeaveNotification(
       ? `${formatDateWithWeekday(first.date)} ~ ${formatDateWithWeekday(sorted[days - 1].date)}`
       : formatDateWithWeekday(first.date);
 
-    // Fetch user name from Lark contact API
-    let userName = 'Unknown';
-    try {
-      const userRes = await client.contact.user.get({
-        path: { user_id: config.defaults.userId },
-        params: { user_id_type: 'user_id' },
-      });
-      userName = userRes.data?.user?.name || 'Unknown';
-    } catch {
-      // fallback
+    // Use configured name or fetch from Lark contact API
+    let userName = config.webhook.notifyUserName || 'Unknown';
+    if (userName === 'Unknown') {
+      try {
+        const userRes = await client.contact.user.get({
+          path: { user_id: config.defaults.userId },
+          params: { user_id_type: 'user_id' },
+        });
+        userName = userRes.data?.user?.name || 'Unknown';
+      } catch {
+        // fallback
+      }
     }
 
     const card = buildLeaveNotifyCard(userName, dateStr, days, first.leaveReason);
-    await sendGroupMessage(groupId, card);
+
+    // Send to company group via Webhook (cross-org)
+    if (config.webhook.companyGroupUrl) {
+      try {
+        await sendWebhookMessage(config.webhook.companyGroupUrl, card);
+      } catch (error) {
+        console.error('[leave-notify] Webhook send failed:', error);
+      }
+    }
+
+    // Also send to personal org group if configured
+    if (groupId && groupId !== 'webhook') {
+      await sendGroupMessage(groupId, card);
+    }
 
     // Mark all as notified
     for (const r of sorted) {

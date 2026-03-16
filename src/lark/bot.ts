@@ -142,12 +142,9 @@ export async function handleMessage(
           await replyMessage(messageId, buildErrorCard(`TODO #${cmd.id} 不是請假項目`));
           return;
         }
-        if (todo.approvalStatus !== '未建立') {
-          await replyMessage(messageId, buildErrorCard(`TODO #${cmd.id} 的假單已經${todo.approvalStatus}`));
-          return;
-        }
-        await replyMessage(messageId, buildLeaveConfirmCard(
-          formatDate(todo.date), todo.leaveType || '未選擇', todo.leaveReason, todo.recordId
+        // 個人組織無法直接建立公司審批單，改為提醒
+        await replyMessage(messageId, buildSuccessCard(
+          `📋 請假資訊：\n日期：${formatDate(todo.date)}\n假別：${todo.leaveType || '未選擇'}\n事由：${todo.leaveReason}\n\n⚠️ 請記得到公司 Lark 手動提交請假審批單`
         ));
         break;
       }

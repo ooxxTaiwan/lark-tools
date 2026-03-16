@@ -31,5 +31,10 @@ export const config = {
     notifyGroupId: optionalEnv('DEFAULT_NOTIFY_GROUP_ID', ''),
     approvalCode: optionalEnv('DEFAULT_APPROVAL_CODE', ''),
   },
+  webhook: {
+    // 公司群組 Webhook URL（用於跨組織發送請假通知）
+    companyGroupUrl: optionalEnv('COMPANY_WEBHOOK_URL', ''),
+    notifyUserName: optionalEnv('NOTIFY_USER_NAME', ''),
+  },
   port: parseInt(optionalEnv('PORT', '3000'), 10),
 };
