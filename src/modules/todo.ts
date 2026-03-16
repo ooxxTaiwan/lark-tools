@@ -120,7 +120,7 @@ export async function getTodosByDateRange(start: Date, end: Date): Promise<TodoR
           { field_name: 'status', operator: 'is', value: ['待辦'] },
         ],
       },
-      sort: [{ field_name: 'date', order: 'asc' }],
+      sort: [{ field_name: 'date', desc: false }],
     },
   });
   return (res.data?.items || []).map((r: any) => toTodoRecord(r));
