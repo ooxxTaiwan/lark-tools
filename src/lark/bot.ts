@@ -15,7 +15,9 @@ export async function handleMessage(
   chatId: string,
   chatType: string
 ): Promise<void> {
-  const cmd = parseCommand(text);
+  // Strip Lark @mention tags (e.g. "@_user_1 ") that appear in group chat messages
+  const cleanedText = text.replace(/@_\w+\s?/g, '').trim();
+  const cmd = parseCommand(cleanedText);
 
   try {
     switch (cmd.type) {

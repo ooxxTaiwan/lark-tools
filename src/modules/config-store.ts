@@ -75,7 +75,19 @@ export async function updateConfigField(
     data: {},
   });
 
-  const items = res.data?.items || [];
+  let items = res.data?.items || [];
+  if (items.length === 0) {
+    // No config record exists yet; seed it first, then re-fetch
+    await loadOrSeedConfig();
+    const retryRes = await client.bitable.appTableRecord.search({
+      path: {
+        app_token: config.bitable.appToken,
+        table_id: config.bitable.configTableId,
+      },
+      data: {},
+    });
+    items = retryRes.data?.items || [];
+  }
   if (items.length > 0) {
     await client.bitable.appTableRecord.update({
       path: {

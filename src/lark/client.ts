@@ -14,9 +14,16 @@ export const eventDispatcher = new lark.EventDispatcher({
 });
 
 export async function handleCardAction(data: InteractiveCardActionEvent): Promise<object> {
-  const value = typeof data.action?.value === 'string'
-    ? JSON.parse(data.action.value)
-    : data.action?.value || {};
+  let value: any;
+  if (typeof data.action?.value === 'string') {
+    try {
+      value = JSON.parse(data.action.value);
+    } catch {
+      value = {};
+    }
+  } else {
+    value = data.action?.value || {};
+  }
   const { action: actionType, recordId, leaveType } = value;
 
   const { updateTodo } = await import('../modules/todo');

@@ -3,24 +3,32 @@ import { client } from '../lark/client';
 import { config } from '../config';
 import { updateTodo, findByApprovalId, TodoRecord } from './todo';
 import { sendPrivateMessage } from './notify';
-import { buildSuccessCard } from '../lark/cards';
+import { buildSuccessCard, buildErrorCard } from '../lark/cards';
 
 export async function createLeaveApproval(
   record: TodoRecord,
   leaveType: string,
-  userId: string
+  userId: string,
+  endDate?: Date
 ): Promise<string> {
   const approvalCode = config.defaults.approvalCode;
+
+  // IMPORTANT: form field IDs (leave_type, leave_start, leave_end, leave_reason)
+  // must match the field IDs defined in the company's Lark approval template.
+  const formFields: object[] = [
+    { id: 'leave_type', type: 'input', value: leaveType },
+    { id: 'leave_start', type: 'date', value: record.date.getTime() },
+    { id: 'leave_reason', type: 'textarea', value: record.leaveReason },
+  ];
+  if (endDate) {
+    formFields.push({ id: 'leave_end', type: 'date', value: endDate.getTime() });
+  }
 
   const res = await client.approval.instance.create({
     data: {
       approval_code: approvalCode,
       user_id: userId,
-      form: JSON.stringify([
-        { id: 'leave_type', type: 'input', value: leaveType },
-        { id: 'leave_start', type: 'date', value: record.date.getTime() },
-        { id: 'leave_reason', type: 'textarea', value: record.leaveReason },
-      ]),
+      form: JSON.stringify(formFields),
     },
   });
 
@@ -62,10 +70,10 @@ export async function handleApprovalStatusChange(
 
   // Notify user of approval result
   if (records.length > 0 && approvalStatus !== '已送出') {
-    const emoji = approvalStatus === '已通過' ? '✅' : '❌';
-    const card = buildSuccessCard(
-      `${emoji} 你的請假申請（${records[0].leaveReason}）${approvalStatus}`
-    );
+    const message = `你的請假申請（${records[0].leaveReason}）${approvalStatus}`;
+    const card = approvalStatus === '已通過'
+      ? buildSuccessCard(`✅ ${message}`)
+      : buildErrorCard(`❌ ${message}`);
     await sendPrivateMessage(config.defaults.userId, card);
   }
 }
