@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: lark-todo-bot
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TZ
+        value: Asia/Taipei
+      - key: LARK_APP_ID
+        sync: false
+      - key: LARK_APP_SECRET
+        sync: false
+      - key: LARK_VERIFICATION_TOKEN
+        sync: false
+      - key: LARK_ENCRYPT_KEY
+        sync: false
+      - key: BITABLE_APP_TOKEN
+        sync: false
+      - key: BITABLE_TODO_TABLE_ID
+        sync: false
+      - key: BITABLE_CONFIG_TABLE_ID
+        sync: false
+      - key: DEFAULT_USER_ID
+        sync: false
+      - key: DEFAULT_NOTIFY_GROUP_ID
+        sync: false
+      - key: DEFAULT_APPROVAL_CODE
+        sync: false
